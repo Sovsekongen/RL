@@ -4,10 +4,4 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += \
-        bandit.cpp \
-        banditcontainer.cpp \
         main.cpp
-
-HEADERS += \
-    bandit.h \
-    banditcontainer.h

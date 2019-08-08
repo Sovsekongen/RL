@@ -1,78 +1,29 @@
 #include <iostream>
-#include <stdlib.h>
-#include <time.h>
+#include <banditcontainer.h>
 
 using namespace std;
 
-#define seed 5
-
-struct bandit1{
-    public:
-        bandit1();
-
-        int operator()(){
-            return 8;
-        }
-};
-
-struct bandit2{
-    public:
-        int lb;
-        int ub;
-        bandit2(int lb, int ub) : lb(lb), ub(ub){
-        }
-        int operator()(){
-            int diff = ub-lb;
-            srand (seed);
-            return rand() % diff + lb;
-        }
-};
-
-struct bandit3{
-    public:
-        int  lb;
-        int ub;
-        int val1;
-        int val2;
-
-        bandit3(int lb, int ub, int val1, int val2) : lb(lb), ub(ub), val1(val1), val2(val2){
-        }
-        int operator()(){
-            int diff = ub-lb;
-            srand (seed);
-            int value = rand() % diff + lb;
-            int array[] = {val1, value, val2};
-            int val = rand() %2+1;
-            return array[val];
-        }
-};
-
-struct bandit4{
-    public:
-        int val1;
-        int val2;
-        bandit4(int val1, int val2) : val1(val1), val2(val2){
-        }
-        int operator()(){
-            srand (seed);
-            int value = rand() % 100 + 1;
-            if (value<=88){
-                return val1;
-            }else{
-                return val2;
-            }
-        }
-};
-
 int main()
 {
-    bandit1 b1;
-    cout << "bandit1: " << b1() << endl;
-    bandit2 b2(20,50);
-    cout << "bandit2: " << b2() << endl;
-    bandit3 b3(20,50,2,100);
-    cout << "bandit3: " << b3() << endl;
-    bandit4 b4(3,42);
-    cout << "bandit4: " << b4() << endl;
+    srand(time(NULL));
+
+    bandit b1(1);
+    bandit b2(1);
+    bandit b3(1);
+    bandit b4(1);
+    bandit b5(1);
+    bandit b6(1);
+    bandit b7(1);
+    bandit b8(1);
+    bandit b9(1);
+    bandit b10(1);
+    std::vector<bandit> banVec = {b1, b2, b3, b4, b5, b6, b7, b8, b9, b10};
+
+    banditContainer bc(banVec);
+    //iterations, c, epsilon, alpha, range, sets
+    bc.ucb(1000, 1, 0.1, 1, 1, 2000, banVec.size());
+
+
+
     return 0;
 }
