@@ -20,19 +20,19 @@
  **/
 
 // Dimensions of the environment
-#define COLUMNS 4
-#define ROWS 3
+#define COLUMNS 6
+#define ROWS 5
 
 // Environment -- spaces: agent can move, "+": reward, "-": punishment.
-char environment[ROWS][COLUMNS] = { { ' ', ' ', ' ', '+' },
-                                    { ' ', '#', ' ', '-' },
-                                    { ' ', ' ', ' ', ' ' }};
+//char environment[ROWS][COLUMNS] = { { ' ', ' ', ' ', '+' },
+//                                    { ' ', '#', ' ', '-' },
+//                                    { ' ', ' ', ' ', ' ' }};
 
-//char environment[ROWS][COLUMNS] = { { ' ', ' ', ' ', ' ', '-', ' ' },
-//                                    { ' ', '#', '#', ' ', ' ', '-' },
-//                                    { ' ', '-', '#', ' ', ' ', ' ' },
-//                                    { ' ', '#', '#', '#', '#', ' ' },
-//                                    { ' ', ' ', ' ', ' ', '#', '+' },};
+char environment[ROWS][COLUMNS] = { { ' ', ' ', ' ', ' ', '-', ' ' },
+                                    { ' ', '#', '#', ' ', ' ', '-' },
+                                    { ' ', '-', '#', ' ', ' ', ' ' },
+                                    { ' ', '#', '#', '#', '#', ' ' },
+                                    { ' ', ' ', ' ', ' ', '#', '+' },};
 
 // Current estimate of state values under the current policy:
 float V[ROWS][COLUMNS];
@@ -141,7 +141,7 @@ action getBestAction(state s)
             cNew++;
 
         }
-        if(value <= estimate[s.x+s.y*COLUMNS][i])
+        if(value < estimate[s.x+s.y*COLUMNS][i])
         {
             value = estimate[s.x+s.y*COLUMNS][i];
             counter = i;
