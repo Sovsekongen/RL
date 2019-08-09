@@ -32,7 +32,7 @@ char environment[ROWS][COLUMNS] = { { ' ', ' ', ' ', ' ', '-', ' ' },
                                     { ' ', '#', '#', ' ', ' ', '-' },
                                     { ' ', '-', '#', ' ', ' ', ' ' },
                                     { ' ', '#', '#', '#', '#', ' ' },
-                                    { ' ', ' ', ' ', ' ', '#', '+' },};
+                                    { ' ', ' ', ' ', '+', '#', '+' },};
 
 // Current estimate of state values under the current policy:
 float V[ROWS][COLUMNS];
@@ -169,10 +169,10 @@ action getBestAction(state s)
     }
     else
     {
-        counter = 0;
+        //counter = 0;
         do
         {
-
+            counter = rand() % 4;
             switch (counter)
             {
                 case UP:    a = UP; break;
@@ -341,7 +341,7 @@ int main(int argc, char** argv)
 
     int sweep   = 0;
     float delta;
-    for(int i = 0; i < 10000; i++)
+    for(int i = 0; i < 1000; i++)
     {
         int actionCounter1 = 0;
 
