@@ -1,7 +1,7 @@
 clc 
 close all 
 clear 
-%rng(time);
+rng(1);
 %% variables 
 global mc
 mc.g = 9.82; 
@@ -11,7 +11,7 @@ mc.m = 1;
 mc.T = 0.05;
 mc.aM = 4;
 state=[mc.L/2;0];
-mc.t = 10;
+mc.t = 15;
 mc.u = -1;
 mc.v_max = sqrt(2*mc.g*mc.h);
 h = figure(1);
@@ -29,17 +29,17 @@ stateFunc = @(st,act) [st(1) + mc.T * st(2);
     st(2) + mc.T * (1 / A(st(1))) * (-B (st(1)) * st(2)^2 - C(st(1)) + ((mc.aM * act) / D(st(1))))];
 
 %% Define radial basis functions
-x_values = linspace(0,mc.L,5);
+x_values = linspace(0,mc.L,3);
 sigma_x = (x_values(2)-x_values(1))/2;
-v_values = linspace(-mc.v_max,mc.v_max,5);
+v_values = linspace(-mc.v_max,mc.v_max,3);
 sigma_v = (v_values(2)-v_values(1))/2;
 [X_radial,V_radial] = meshgrid(x_values, v_values); 
 % Define vector function for all phi's
 Phi_i = @(x,v) reshape(exp(- ( (x-X_radial).^2/sigma_x + (v-V_radial).^2/sigma_v ) ).',[],1);
 
 %% Instantiate Weights
-W_plus = rand(25,1);
-W_minus = rand(25,1);
+W_plus = rand(9,1);
+W_minus = rand(9,1);
 W = {W_plus, W_minus};
 
 %% Choose random action for start
@@ -49,8 +49,8 @@ action = actions(rand_act);
 
 %% Training the network
 epsilon_default = 0.9;
-
-for i=1:30
+rng('shuffle');
+for i = 1:30
     time_counter = 0;
     epsilon = epsilon_default / i;
     state = [mc.L / 2; 0];
@@ -59,16 +59,24 @@ for i=1:30
     while time_counter < mc.t 
         randomEpsilonVal = rand(1);
         if randomEpsilonVal < epsilon
-            actions = [-1,1];
-            rand_act = randi([1,2],1);
+            actions = [-1, 1];
+            rand_act = randi([1, 2], 1);
             action = actions(rand_act); 
-            new_state = stateFunc(state, action);
             
+            new_state = stateFunc(state, action);
             if new_state(1) >= mc.L || new_state(1) <=0  
                 if action == -1
-                    W{2} = W{2} - alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
+                    if new_state(1) == 0
+                       W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    else
+                       W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    end                      
                 else
-                    W{1} = W{1} - alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
+                     if new_state(1) == 0
+                       W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    else
+                       W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    end                                   
                 end
                 
                 if(new_state(1) >= mc.L)
@@ -78,39 +86,47 @@ for i=1:30
             end
             
             if action == -1
-                W{2} = W{2} - alpha * (new_state(1) + transpose(W{2})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
+                W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
             else
-                W{1} = W{1} - alpha * (new_state(1) + transpose(W{1})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
+                W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));                
             end
-            
         else
-            Q_plus = transpose(W{1})*Phi_i(state(1),state(2));
-            Q_minus = transpose(W{2})*Phi_i(state(1),state(2));
-            if Q_minus < Q_plus
+            Q_plus  = transpose(W{1}) * Phi_i(state(1),state(2));
+            Q_minus = transpose(W{2}) * Phi_i(state(1),state(2));
+            if Q_minus > Q_plus
                action = -1;
                new_state = stateFunc(state,action);
                if new_state(1) >= mc.L || new_state(1) <=0
-                    W{2} = W{2} - alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
-                    
+                   if new_state(1) == 0
+                       W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                   else
+                       W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                   end
+
                     if(new_state(1) >= mc.L)
                         success = success + 1;
                     end
                     break;
                end
                %Q = transpose(W{2})*Phi_i(state(1),state(2));
-               W{2} = W{2} - alpha * (new_state(1) + transpose(W{2})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+               W{2} = W{2} + alpha * (new_state(1) + transpose(W{2})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
             else
                 action = 1;
                 new_state = stateFunc(state,action);
                 if new_state(1) >= mc.L || new_state(1) <=0  
-                    W{1} = W{1} - alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));    
+                    if new_state(1) == 0
+                       W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    else
+                       W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* ( - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                    end 
+                      
                     if(new_state(1) >= mc.L)
                         success = success + 1;
                     end
                     break;
                 end
                 %Q = transpose(W{1})*Phi_i(state(1),state(2));
-                W{1} = W{1} - alpha * (new_state(1) + transpose(W{1})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
+                W{1} = W{1} + alpha * (new_state(1) + transpose(W{1})* (gamma* Phi_i(new_state(1),new_state(2)) - Phi_i(state(1),state(2)))) *Phi_i(state(1),state(2));
             end
         end
         
@@ -122,15 +138,17 @@ for i=1:30
     fprintf('Iteration: %i. Succes percentage: %0.2f percent\n',i, (success/i)*100);
 end
 
-succes = 0;
+success = 0;
+fprintf('Done teaching. Testing will now commence.\n');
 
 for j = 1:20
      state = [mc.L / 2; 0];
+     time_counter = 0;
      
      while time_counter < mc.t 
         Q_plus = transpose(W{1})*Phi_i(state(1),state(2));
         Q_minus = transpose(W{2})*Phi_i(state(1),state(2));
-        if Q_minus < Q_plus
+        if Q_minus > Q_plus
             action = -1;
         else
             action = 1;
@@ -144,9 +162,9 @@ for j = 1:20
         end
         state = new_state; 
         mcplot(h, state); pause(0.0001);
+        time_counter = time_counter + mc.T;
      end
      
-     fprintf('Iteration: %i. Succes percentage: %0.2f percent\n',j, (success/j)*100);
+     fprintf('Iteration: %i. Times that went well %i. Succes percentage: %0.2f percent\n',j, success, (success / j) * 100);
      time_counter = time_counter + mc.T;
-     
 end
